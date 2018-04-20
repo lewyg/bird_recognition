@@ -5,6 +5,14 @@ import cv2
 import config
 
 
+def mkdir(path):
+    try:
+        os.makedirs(path)
+
+    except OSError:
+        pass
+
+
 class Image:
     def __init__(self, filename):
         self.filename = filename.replace('\\', '/')
@@ -14,12 +22,10 @@ class Image:
         self.path = self.__get_relative_path()
 
     def save(self):
-        filename = os.path.join(
-            config.OUT_PATH,
-            self.path,
-            '{}.{}'.format(self.name, config.IMAGE_FORMAT)
-        ).replace('\\', '/')
+        path = os.path.join(config.OUT_PATH, self.path)
+        filename = os.path.join(path, '{}.{}'.format(self.name, config.IMAGE_FORMAT)).replace('\\', '/')
 
+        mkdir(path)
         cv2.imwrite(filename, self.image)
 
     def __load(self):
@@ -33,30 +39,25 @@ class Image:
 
 
 class ImagePreprocessor:
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
+    def __init__(self, size):
+        self.size = size
 
-    def run(self, image, bounding_box):
-        scale_ratio = self.__get_scale_ratio(bounding_box)
-        x, y = self.__get_square_position(bounding_box)
-        x = int(x * scale_ratio)
-        y = int(y * scale_ratio)
+    def run(self, image, bounding_box, border_style):
+        scale_ratio = min(self.size / bounding_box.width, self.size / bounding_box.height)
+        x, y = self.__get_fixed_position(bounding_box)
 
         image = cv2.resize(image, None, fx=scale_ratio, fy=scale_ratio)
-        image = image[y:y + self.height, x:x + self.width]
+        x = int(x * scale_ratio) + self.size
+        y = int(y * scale_ratio) + self.size
 
-        return image
+        image = cv2.copyMakeBorder(image, self.size, self.size, self.size, self.size, border_style)
 
-    def __get_scale_ratio(self, bounding_box):
-        return min(self.width / bounding_box.width, self.height / bounding_box.height)
+        return image[y:y + self.size, x:x + self.size]
 
-    def __get_square_position(self, bounding_box):
+    def __get_fixed_position(self, bounding_box):
         diff = abs(bounding_box.height - bounding_box.width)
-
         if bounding_box.height > bounding_box.width:
-            return bounding_box.y, int(bounding_box.x - diff / 2)
+            return int(bounding_box.x - diff / 2), bounding_box.y
 
         else:
             return bounding_box.x, int(bounding_box.y - diff / 2)
-
