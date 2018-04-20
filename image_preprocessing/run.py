@@ -12,7 +12,9 @@ def find_image_files():
 
 
 def preprocess(image_files, bbox_collection, preprocessor):
-    for filename in image_files:
+    for i, filename in enumerate(image_files):
+        print(filename, '({} / {})'.format(i, len(image_files)))
+
         image_data = Image(filename)
         bounding_box = bbox_collection.get(image_data.name)
 
