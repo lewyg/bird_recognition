@@ -1,0 +1,7 @@
+.idea/
+/resources
+*/__py_cache__
+
+!/resources/bounding_boxes
+!/resources/in/.gitkeep
+!/resources/out/.gitkeep
