@@ -1,19 +1,13 @@
 class BoundingBox:
-    def __init__(self, name, x1, x2, y1, y2):
+    def __init__(self, name, x, y, width, height):
         self.name = name
-        self.x1 = x1
-        self.x2 = x2
-        self.y1 = y1
-        self.y2 = y2
-
-    def width(self):
-        return self.x2 - self.x1
-
-    def height(self):
-        return self.y2 - self.y1
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
 
     def __repr__(self):
-        return '<BoundingBox {} ({}, {}) ({}, {})>'.format(self.name, self.x1, self.y1, self.x2, self.y2)
+        return '<BoundingBox {} ({}, {}) ({}, {})>'.format(self.name, self.x, self.y, self.width, self.height)
 
 
 class BoundingBoxCollection:
@@ -28,7 +22,8 @@ class BoundingBoxCollection:
         return next(filter(lambda bbox: bbox.name == name, self.bounding_boxes), None)
 
     def __read_bounding_box(self, line):
-        name, x1, x2, y1, y2 = line.split()
+        name, *position = line.split()
+        x, y, width, height = list(map(int, position))
         name = name.replace('-', '')
 
-        return BoundingBox(name=name, x1=min(x1, x2), x2=max(x1, x2), y1=min(y1, y2), y2=max(y1, y2))
+        return BoundingBox(name=name, x=x, y=y, width=width, height=height)
