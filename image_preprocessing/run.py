@@ -52,7 +52,7 @@ def main():
     bbox_collection = BoundingBoxCollection()
     bbox_collection.load(filename=config.BOUNDING_BOXES_PATH)
 
-    image_files = find_image_files(config.IN_PATH)[:100]
+    image_files = find_image_files(config.IN_PATH)
     X, y = preprocess(image_files, bbox_collection)
 
     save_data(X, y)
