@@ -51,6 +51,7 @@ class ImagePreprocessor:
         y = int(y * scale_ratio) + self.size
 
         image = cv2.copyMakeBorder(image, self.size, self.size, self.size, self.size, border_style)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         return image[y:y + self.size, x:x + self.size]
 
