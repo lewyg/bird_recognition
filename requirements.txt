@@ -1,1 +1,5 @@
+matplotlib
+scipy
+scikit-image
+numpy
 opencv-python
