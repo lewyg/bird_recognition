@@ -14,7 +14,8 @@ def find_image_files(path):
 
 def preprocess(image_files, bbox_collection):
     preprocessor = ImagePreprocessor(size=config.IMAGE_SIZE)
-    lbp = LocalBinaryPattern(n_points=config.LBP_POINTS_NUMBER, radius=config.LBP_RADIUS, method=config.LBP_METHOD)
+    lbp = LocalBinaryPattern(n_points=config.LBP_POINTS_NUMBER, radius=config.LBP_RADIUS,
+                             method=config.LBP_METHOD, part_size=config.LBP_PART_SIZE)
     X, y = list(), list()
 
     for i, filename in enumerate(image_files):
@@ -51,7 +52,7 @@ def main():
     bbox_collection = BoundingBoxCollection()
     bbox_collection.load(filename=config.BOUNDING_BOXES_PATH)
 
-    image_files = find_image_files(config.IN_PATH)
+    image_files = find_image_files(config.OUT_PATH)
     X, y = preprocess(image_files, bbox_collection)
 
     save_data(X, y)

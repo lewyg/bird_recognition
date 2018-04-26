@@ -1,5 +1,5 @@
 import csv
-from itertools import groupby
+from itertools import groupby, chain
 from operator import itemgetter
 
 import numpy as np
@@ -30,6 +30,26 @@ class Dataset:
 
         return (self._columns(training_set, slice(-1)), self._columns(test_set, slice(-1)),
                 self._columns(training_set, -1), self._columns(test_set, -1))
+
+    def split_folds(self, n):
+        folds = [list() for _ in range(n)]
+        grouped_data = groupby(sorted(self.data, key=itemgetter(-1)), itemgetter(-1))
+
+        for _, key_data in grouped_data:
+            permuted_data = np.random.permutation(list(key_data))
+            fold_size = int(len(permuted_data) / n)
+            for i, fold in enumerate(folds):
+                fold.extend(permuted_data[i * fold_size:(i + 1) * fold_size])
+
+        return self._folds_iterator(folds)
+
+    def _folds_iterator(self, folds):
+        for i, test_set in enumerate(folds):
+            training_set = list(chain(*folds[:i], *folds[i + 1:]))
+            test_set = list(test_set)
+
+            yield (self._columns(training_set, slice(-1)), self._columns(test_set, slice(-1)),
+                   self._columns(training_set, -1), self._columns(test_set, -1))
 
     def classes(self):
         return list(set(sample[-1] for sample in self.data))
