@@ -4,13 +4,13 @@ import config
 from recognition.dataset import Dataset
 
 
-def main():
+def main(layers=4):
     dataset = Dataset(config.DATA_PATH, config.LABELS_PATH)
     X_train, X_test, y_train, y_test = dataset.split(ratio=0.7)
 
-    layer_sizes = (28, 56, 112, 224)
+    hidden_layer_sizes = config.HIDDEN_LAYER_SIZES[layers - 1]
 
-    clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=layer_sizes, random_state=1)
+    clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=hidden_layer_sizes, random_state=1)
     clf.fit(X_train, y_train)
 
     print(clf.score(X_test, y_test))
