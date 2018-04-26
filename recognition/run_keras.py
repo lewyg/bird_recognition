@@ -12,7 +12,7 @@ def main(layers=4):
 
     input_layer_size = len(X_train[0])
     output_layer_size = len(dataset.classes())
-    hidden_layer_sizes = config.HIDDEN_LAYER_SIZES[layers]
+    hidden_layer_sizes = config.HIDDEN_LAYER_SIZES[layers-1]
 
     clf = Sequential()
 

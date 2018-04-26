@@ -14,7 +14,7 @@ def find_image_files(path):
 
 def preprocess(image_files, bbox_collection):
     preprocessor = ImagePreprocessor(size=config.IMAGE_SIZE)
-    lbp = LocalBinaryPattern(n_points=config.LBP_POINTS_NUMBER, radius=config.LBP_RADIUS)
+    lbp = LocalBinaryPattern(n_points=config.LBP_POINTS_NUMBER, radius=config.LBP_RADIUS, method=config.LBP_METHOD)
     X, y = list(), list()
 
     for i, filename in enumerate(image_files):
