@@ -15,9 +15,12 @@ IMAGE_FORMAT = 'jpg'
 IMAGE_SIZE = 224
 IMAGE_BORDER_STYLE = cv2.BORDER_DEFAULT  # reflect image on borders
 
+
 LBP_RADIUS = 1
 LBP_POINTS_NUMBER = LBP_RADIUS * 8
 LBP_METHOD = 'uniform'
+LBP_PARTS = 4
+LBP_PART_SIZE = int(IMAGE_SIZE / LBP_PARTS)
 
 DATA_PATH = os.path.join(RESOURCES_PATH, 'data')
 LABELS_PATH = os.path.join(RESOURCES_PATH, 'labels')
