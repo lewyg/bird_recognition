@@ -1,3 +1,5 @@
+keras
+scikit-learn
 matplotlib
 scipy
 scikit-image
