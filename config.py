@@ -14,6 +14,7 @@ BOUNDING_BOXES_PATH = os.path.join(RESOURCES_PATH, 'bounding_boxes').replace('\\
 IMAGE_FORMAT = 'jpg'
 IMAGE_SIZE = 224
 IMAGE_BORDER_STYLE = cv2.BORDER_DEFAULT  # reflect image on borders
+PART_SIZE = 56
 
 LBP_RADIUS = 1
 LBP_POINTS_NUMBER = LBP_RADIUS * 8
