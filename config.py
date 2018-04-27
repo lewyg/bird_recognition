@@ -16,7 +16,7 @@ IMAGE_SIZE = 224
 IMAGE_BORDER_STYLE = cv2.BORDER_DEFAULT  # reflect image on borders
 
 
-LBP_RADIUS = 1
+LBP_RADIUS = 3
 LBP_POINTS_NUMBER = LBP_RADIUS * 8
 LBP_METHOD = 'uniform'
 LBP_PARTS = 4
@@ -29,5 +29,5 @@ HIDDEN_LAYER_SIZES = (
     (420,),
     (140, 280),
     (60, 120, 240),
-    (28, 56, 112, 224)
+    (28, 56, 112, 224),
 )

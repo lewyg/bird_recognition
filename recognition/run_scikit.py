@@ -10,8 +10,11 @@ def main(layers=4):
 
     hidden_layer_sizes = config.HIDDEN_LAYER_SIZES[layers - 1]
 
+    print('start =====>')
     clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=hidden_layer_sizes, random_state=1)
+    print('mid =====>')
     clf.fit(X_train, y_train)
+    print('end =====>')
 
     print(clf.score(X_test, y_test))
 
