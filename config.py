@@ -9,6 +9,7 @@ BASE_PATH = os.path.abspath(os.path.join(os.curdir, os.pardir)).replace('\\', '/
 RESOURCES_PATH = os.path.join(BASE_PATH, 'resources').replace('\\', '/')
 IN_PATH = os.path.join(RESOURCES_PATH, 'in').replace('\\', '/')
 OUT_PATH = os.path.join(RESOURCES_PATH, 'out').replace('\\', '/')
+PLOT_PATH = os.path.join(RESOURCES_PATH, 'plots').replace('\\', '/')
 BOUNDING_BOXES_PATH = os.path.join(RESOURCES_PATH, 'bounding_boxes').replace('\\', '/')
 
 IMAGE_FORMAT = 'jpg'
@@ -31,3 +32,5 @@ HIDDEN_LAYER_SIZES = (
     (60, 120, 240),
     (28, 56, 112, 224)
 )
+
+MAX_EPOCHS = 220

@@ -1,18 +1,19 @@
+import os
+
 import keras
+import keras.metrics as keras_metrics
+import matplotlib.pyplot as plt
 from keras.layers import Dense, np
 from keras.models import Sequential
 from scipy import interp
-import matplotlib.pyplot as plt
-from itertools import cycle
 from sklearn.metrics import roc_curve, auc
-import keras.metrics as keras_metrics
 
 import config
 from recognition.dataset import Dataset
 
 
-def path(name):
-    return '../resources/plots/{}'.format(name)
+def figure_path(name):
+    return os.path.join(config.PLOT_PATH, name)
 
 
 def t5er(y_true, y_pred):
@@ -41,24 +42,17 @@ def main(layers=4):
     y_train = keras.utils.to_categorical(np.array(y_train), num_classes=output_layer_size)
     y_test = keras.utils.to_categorical(np.array(y_test), num_classes=output_layer_size)
 
-    history = clf.fit(np.array(X_train), y_train, epochs=220, batch_size=32)
+    history = clf.fit(np.array(X_train), y_train, epochs=config.MAX_EPOCHS, batch_size=32)
 
     print(clf.evaluate(np.array(X_test), y_test, batch_size=32))
 
-    plt.xlabel('Epoch number')
-    plt.ylabel('Accuracy')
-    plt.plot(history.history['acc'], label='top-1')
-    plt.plot(history.history['t5er'], label='top-5')
-    plt.legend(loc="lower right")
+    plot_training_accuracy(history, layers)
 
-    name = 'plot_acc_test{}_lbp_radius{}.png'.format(layers, config.LBP_RADIUS)
-    plt.savefig(path(name))
-    plt.clf()
+    create_roc(clf, X_test, y_test, layers, output_layer_size)
 
-    #### ROC
+
+def create_roc(clf, X_test, y_test, layers, output_layer_size):
     y_score = clf.predict(np.array(X_test))
-
-
     # Plot linewidth.
     lw = 2
 
@@ -76,39 +70,27 @@ def main(layers=4):
     roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
     # Compute macro-average ROC curve and ROC area
-
     # First aggregate all false positive rates
     all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
 
     # Then interpolate all ROC curves at this points
     mean_tpr = np.zeros_like(all_fpr)
+
     for i in range(n_classes):
         mean_tpr += interp(all_fpr, fpr[i], tpr[i])
 
     # Finally average it and compute AUC
     mean_tpr /= n_classes
-
     fpr["macro"] = all_fpr
     tpr["macro"] = mean_tpr
     roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
 
     # Plot all ROC curves
     plt.figure(1)
-    plt.plot(fpr["micro"], tpr["micro"],
-             label='micro-average ROC curve (area = {0:0.2f})'
-                   ''.format(roc_auc["micro"]),
+    plt.plot(fpr["micro"], tpr["micro"], label='micro-average ROC curve (area = {0:0.2f})'.format(roc_auc["micro"]),
              color='deeppink', linestyle=':', linewidth=4)
-
-    plt.plot(fpr["macro"], tpr["macro"],
-             label='macro-average ROC curve (area = {0:0.2f})'
-                   ''.format(roc_auc["macro"]),
+    plt.plot(fpr["macro"], tpr["macro"], label='macro-average ROC curve (area = {0:0.2f})'.format(roc_auc["macro"]),
              color='navy', linestyle=':', linewidth=4)
-
-    # colors = cycle(['aqua', 'darkorange', 'cornflowerblue'])
-    # for i, color in zip(range(n_classes), colors):
-    #     plt.plot(fpr[i], tpr[i], color=color, lw=lw,
-    #              label='ROC curve of class {0} (area = {1:0.2f})'
-    #                    ''.format(i, roc_auc[i]))
 
     plt.plot([0, 1], [0, 1], 'k--', lw=lw)
     plt.xlim([0.0, 1.05])
@@ -121,7 +103,21 @@ def main(layers=4):
     plt.grid(True)
 
     name = 'plot_roc{}_lbp_radius{}.png'.format(layers, config.LBP_RADIUS)
-    plt.savefig(path(name))
+
+    plt.savefig(figure_path(name))
+    plt.clf()
+
+
+def plot_training_accuracy(history, layers):
+    plt.xlabel('Epoch number')
+    plt.ylabel('Accuracy')
+    plt.plot(history.history['acc'], label='top-1')
+    plt.plot(history.history['t5er'], label='top-5')
+    plt.legend(loc="lower right")
+
+    name = 'plot_acc_test{}_lbp_radius{}.png'.format(layers, config.LBP_RADIUS)
+
+    plt.savefig(figure_path(name))
     plt.clf()
 
 
