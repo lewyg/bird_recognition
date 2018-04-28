@@ -5,9 +5,14 @@ from scipy import interp
 import matplotlib.pyplot as plt
 from itertools import cycle
 from sklearn.metrics import roc_curve, auc
+import keras.metrics as keras_metrics
 
 import config
 from recognition.dataset import Dataset
+
+
+def t5er(y_true, y_pred):
+    return keras_metrics.top_k_categorical_accuracy(y_true, y_pred, 5)
 
 
 def main(layers=4):
@@ -27,14 +32,20 @@ def main(layers=4):
 
     clf.add(Dense(output_layer_size, activation='softmax'))
 
-    clf.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
+    clf.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy', t5er])
+
 
     y_train = keras.utils.to_categorical(np.array(y_train), num_classes=output_layer_size)
     y_test = keras.utils.to_categorical(np.array(y_test), num_classes=output_layer_size)
 
-    clf.fit(np.array(X_train), y_train, epochs=20, batch_size=32)
+    history = clf.fit(np.array(X_train), y_train, epochs=20, batch_size=32)
 
     print(clf.evaluate(np.array(X_test), y_test, batch_size=32))
+
+    print(history.history)
+    plt.plot(history.history['acc'])
+    plt.plot(history.history['t5er'])
+    plt.show()
 
 
     #### ROC
@@ -98,36 +109,11 @@ def main(layers=4):
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.title('Some extension of Receiver operating characteristic to multi-class')
-    plt.legend(loc="lower right")
+    #plt.legend(loc="lower right")
     plt.show()
 
-    # Zoom in view of the upper left corner.
-    plt.figure(2)
-    plt.xlim(0, 0.2)
-    plt.ylim(0.8, 1)
-    plt.plot(fpr["micro"], tpr["micro"],
-             label='micro-average ROC curve (area = {0:0.2f})'
-                   ''.format(roc_auc["micro"]),
-             color='deeppink', linestyle=':', linewidth=4)
 
-    plt.plot(fpr["macro"], tpr["macro"],
-             label='macro-average ROC curve (area = {0:0.2f})'
-                   ''.format(roc_auc["macro"]),
-             color='navy', linestyle=':', linewidth=4)
-
-    colors = cycle(['aqua', 'darkorange', 'cornflowerblue'])
-    for i, color in zip(range(n_classes), colors):
-        plt.plot(fpr[i], tpr[i], color=color, lw=lw,
-                 label='ROC curve of class {0} (area = {1:0.2f})'
-                       ''.format(i, roc_auc[i]))
-
-    plt.plot([0, 1], [0, 1], 'k--', lw=lw)
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Some extension of Receiver operating characteristic to multi-class')
-    plt.legend(loc="lower right")
-    plt.show()
 
 
 if __name__ == '__main__':
-    main()
+    main(1)
