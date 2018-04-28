@@ -34,7 +34,6 @@ def main(layers=4):
 
     clf.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy', t5er])
 
-
     y_train = keras.utils.to_categorical(np.array(y_train), num_classes=output_layer_size)
     y_test = keras.utils.to_categorical(np.array(y_test), num_classes=output_layer_size)
 
@@ -97,19 +96,21 @@ def main(layers=4):
                    ''.format(roc_auc["macro"]),
              color='navy', linestyle=':', linewidth=4)
 
-    colors = cycle(['aqua', 'darkorange', 'cornflowerblue'])
-    for i, color in zip(range(n_classes), colors):
-        plt.plot(fpr[i], tpr[i], color=color, lw=lw,
-                 label='ROC curve of class {0} (area = {1:0.2f})'
-                       ''.format(i, roc_auc[i]))
+    # colors = cycle(['aqua', 'darkorange', 'cornflowerblue'])
+    # for i, color in zip(range(n_classes), colors):
+    #     plt.plot(fpr[i], tpr[i], color=color, lw=lw,
+    #              label='ROC curve of class {0} (area = {1:0.2f})'
+    #                    ''.format(i, roc_auc[i]))
 
     plt.plot([0, 1], [0, 1], 'k--', lw=lw)
-    plt.xlim([0.0, 1.0])
+    plt.xlim([0.0, 1.05])
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Some extension of Receiver operating characteristic to multi-class')
-    #plt.legend(loc="lower right")
+    plt.title('Receiver operating characteristic to bird_classification')
+    plt.legend(loc="lower right")
+    plt.axes().set_aspect('equal')
+    plt.grid(True)
     plt.show()
 
 
