@@ -11,6 +11,10 @@ import config
 from recognition.dataset import Dataset
 
 
+def path(name):
+    return '../resources/plots/{}'.format(name)
+
+
 def t5er(y_true, y_pred):
     return keras_metrics.top_k_categorical_accuracy(y_true, y_pred, 5)
 
@@ -37,15 +41,19 @@ def main(layers=4):
     y_train = keras.utils.to_categorical(np.array(y_train), num_classes=output_layer_size)
     y_test = keras.utils.to_categorical(np.array(y_test), num_classes=output_layer_size)
 
-    history = clf.fit(np.array(X_train), y_train, epochs=20, batch_size=32)
+    history = clf.fit(np.array(X_train), y_train, epochs=220, batch_size=32)
 
     print(clf.evaluate(np.array(X_test), y_test, batch_size=32))
 
-    print(history.history)
-    plt.plot(history.history['acc'])
-    plt.plot(history.history['t5er'])
-    plt.show()
+    plt.xlabel('Epoch number')
+    plt.ylabel('Accuracy')
+    plt.plot(history.history['acc'], label='top-1')
+    plt.plot(history.history['t5er'], label='top-5')
+    plt.legend(loc="lower right")
 
+    name = 'plot_acc_test{}_lbp_radius{}.png'.format(layers, config.LBP_RADIUS)
+    plt.savefig(path(name))
+    plt.clf()
 
     #### ROC
     y_score = clf.predict(np.array(X_test))
@@ -111,10 +119,14 @@ def main(layers=4):
     plt.legend(loc="lower right")
     plt.axes().set_aspect('equal')
     plt.grid(True)
-    plt.show()
 
-
+    name = 'plot_roc{}_lbp_radius{}.png'.format(layers, config.LBP_RADIUS)
+    plt.savefig(path(name))
+    plt.clf()
 
 
 if __name__ == '__main__':
     main(1)
+    main(2)
+    main(3)
+    main(4)
