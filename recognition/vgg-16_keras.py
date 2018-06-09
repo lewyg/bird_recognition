@@ -73,7 +73,10 @@ def get_data(filenames):
     X, y = list(), list()
     for filename in filenames:
         filename = filename.replace('\\', '/')
-        X.append(cv2.imread(filename))
+        image = cv2.imread(filename)
+        image = image.transpose((2, 0, 1))
+        image = np.expand_dims(image, axis=0)
+        X.append(image)
         y.append(int(filename.split("/")[-2]))
 
     return np.array(X), np.array(y)
@@ -89,7 +92,7 @@ def main():
     sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
     model.compile(optimizer=sgd, loss='categorical_crossentropy')
     # print(model.evaluate(np.array(X_test), y_test, batch_size=32))
-    out = model.predict(np.array(X_test))
+    out = model.predict(np.array(X[1]))
     print(np.argmax(out))
 
 
