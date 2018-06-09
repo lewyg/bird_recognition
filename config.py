@@ -11,6 +11,7 @@ IN_PATH = os.path.join(RESOURCES_PATH, 'in').replace('\\', '/')
 OUT_PATH = os.path.join(RESOURCES_PATH, 'out').replace('\\', '/')
 PLOT_PATH = os.path.join(RESOURCES_PATH, 'plots').replace('\\', '/')
 BOUNDING_BOXES_PATH = os.path.join(RESOURCES_PATH, 'bounding_boxes').replace('\\', '/')
+VGG16_WEIGHTS_PATH = os.path.join(RESOURCES_PATH, 'vgg16_weights.h5').replace('\\', '/')
 
 IMAGE_FORMAT = 'jpg'
 IMAGE_SIZE = 224
