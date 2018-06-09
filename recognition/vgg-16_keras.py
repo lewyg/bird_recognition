@@ -1,3 +1,6 @@
+import cv2
+import glob
+
 import numpy as np
 from keras.layers.convolutional import Conv2D, MaxPooling2D, ZeroPadding2D
 from keras.layers.core import Flatten, Dense, Dropout
@@ -5,6 +8,7 @@ from keras.models import Sequential
 from keras.optimizers import SGD
 
 import config
+from preprocessing.image import ImageData
 from recognition.dataset import Dataset
 
 
@@ -59,15 +63,35 @@ def VGG_16(weights_path=None):
     return vgg_16
 
 
-if __name__ == "__main__":
+def find_image_files(path):
+    pattern = '/**/*.{}'.format(config.IMAGE_FORMAT)
+
+    return [name for name in glob.glob(path + pattern, recursive=True)]
+
+
+def get_data(filenames):
+    X, y = list(), list()
+    for filename in filenames:
+        filename = filename.replace('\\', '/')
+        X.append(cv2.imread(filename))
+        y.append(int(filename.split("/")[-2]))
+
+    return np.array(X), np.array(y)
+
+
+def main():
+    X, y = get_data(find_image_files(config.OUT_PATH))
+
     dataset = Dataset(config.DATA_PATH, config.LABELS_PATH)
     X_train, X_test, y_train, y_test = dataset.split(ratio=0.7)
-
     # Test pretrained model
     model = VGG_16(config.VGG16_WEIGHTS_PATH)
     sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
     model.compile(optimizer=sgd, loss='categorical_crossentropy')
-    #print(model.evaluate(np.array(X_test), y_test, batch_size=32))
+    # print(model.evaluate(np.array(X_test), y_test, batch_size=32))
     out = model.predict(np.array(X_test))
     print(np.argmax(out))
 
+
+if __name__ == "__main__":
+    main()
