@@ -42,7 +42,7 @@ def save_bottlebeck_features(train_generator, test_generator):
     #     shuffle=False)
     #bottleneck_features_train = model.predict(X_train)
     bottleneck_features_train = model.predict_generator(
-        train_generator, 21)
+        train_generator, config.TRAIN_EXAMPLES // config.BATCH_SIZE)
     np.save(config.BOTTLENECK_TRAIN_FEATURES_PATH, bottleneck_features_train)
 
     # generator = datagen.flow_from_directory(
@@ -53,7 +53,7 @@ def save_bottlebeck_features(train_generator, test_generator):
     #     shuffle=False)
     #bottleneck_features_test = model.predict(X_test)
     bottleneck_features_test = model.predict_generator(
-        test_generator, 9)
+        test_generator, config.TEST_EXAMPLES // config.BATCH_SIZE)
     np.save(config.BOTTLENECK_TEST_FEATURES_PATH, bottleneck_features_test)
 
 
@@ -63,15 +63,15 @@ def train_top_model(train_labels, test_labels):
 
     model = Sequential()
     model.add(Flatten(input_shape=train_data.shape[1:]))
-    model.add(Dense(420, activation='relu'))
-    model.add(Dense(50, activation='softmax'))
+    model.add(Dense(config.HIDDEN_LAYER_SIZES[0], activation='relu'))
+    model.add(Dense(config.CLASSES, activation='softmax'))
 
     model.compile(optimizer='rmsprop',
                   loss='categorical_crossentropy', metrics=['accuracy'])
 
     model.fit(train_data, train_labels,
-              epochs=50,
-              batch_size=100,
+              epochs=config.EPOCHS,
+              batch_size=config.BATCH_SIZE,
               validation_data=(test_data, test_labels))
 
     model.save_weights(config.TOP_MODEL_WEIGHTS_PATH)
@@ -79,23 +79,23 @@ def train_top_model(train_labels, test_labels):
 
 def main():
     dataset = ImageDataset(config.OUT_PATH, config.SEED)
-    X_train, X_test, y_train, y_test = dataset.split(ratio=0.3)
+    X_train, X_test, y_train, y_test = dataset.split(1 - config.SPLIT_RATIO)
 
-    y_train = keras.utils.to_categorical(np.array(y_train), num_classes=50)
-    y_test = keras.utils.to_categorical(np.array(y_test), num_classes=50)
+    y_train = keras.utils.to_categorical(np.array(y_train), num_classes=config.CLASSES)
+    y_test = keras.utils.to_categorical(np.array(y_test), num_classes=config.CLASSES)
 
     datagen = ImageDataGenerator(rescale=1. / 255)
 
     train_generator = datagen.flow(
         X_train,
         y_train,
-        batch_size=32,
+        batch_size=config.BATCH_SIZE,
         shuffle=False)
 
     test_generator = datagen.flow(
         X_test,
         y_test,
-        batch_size=32,
+        batch_size=config.BATCH_SIZE,
         shuffle=False)
 
     # model = VGG16(include_top=False, weights="imagenet", classes=1000,
