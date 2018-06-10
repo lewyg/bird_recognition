@@ -19,29 +19,29 @@ def main(bottleneck_ready=False, top_model_ready=False):
 
     sgd = SGD(lr=1e-4, momentum=0.9, nesterov=True)
     model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
+    #
+    # for layer in model.layers[:15]:
+    #     layer.trainable = False
+    #
+    # sgd = SGD(lr=1e-6, momentum=0.9, nesterov=True)
+    # model.compile(loss='categorical_crossentropy',
+    #               optimizer=sgd,
+    #               metrics=['acc'])
+    #
+    # #model.fit_generator(X_train, y_train, batch_size=config.BATCH_SIZE, epochs=config.EPOCHS)
+    # # fine-tune the model
+    # history = model.fit_generator(
+    #     train_generator,
+    #     steps_per_epoch=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
+    #     epochs=1,
+    #     validation_data=test_generator,
+    #     validation_steps=config.TEST_EXAMPLES // config.BATCH_SIZE,
+    #     verbose=2)
+    #
+    # print('acc : ', history.history['acc'])
+    # print('loss: ', history.history['loss'])
 
-    for layer in model.layers[:15]:
-        layer.trainable = False
-
-    sgd = SGD(lr=1e-6, momentum=0.9, nesterov=True)
-    model.compile(loss='categorical_crossentropy',
-                  optimizer=sgd,
-                  metrics=['acc'])
-
-    #model.fit_generator(X_train, y_train, batch_size=config.BATCH_SIZE, epochs=config.EPOCHS)
-    # fine-tune the model
-    history = model.fit_generator(
-        train_generator,
-        steps_per_epoch=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
-        epochs=1,
-        validation_data=test_generator,
-        validation_steps=config.TEST_EXAMPLES // config.BATCH_SIZE,
-        verbose=2)
-
-    print('acc : ', history.history['acc'])
-    print('loss: ', history.history['loss'])
-
-    print(model.evaluate(X_test, y_test, batch_size=config.BATCH_SIZE))
+    print(model.evaluate_generator(test_generator, verbose=1))
     print(model.metrics_names)
 
     return model
