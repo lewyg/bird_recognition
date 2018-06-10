@@ -1,4 +1,5 @@
 import glob
+import numpy as np
 
 from keras.applications.imagenet_utils import preprocess_input
 from keras.preprocessing.image import load_img, img_to_array
@@ -23,7 +24,7 @@ class ImageDataset:
     def __get_data(self):
         X, y = list(), list()
 
-        for filename in self._filenames[:5]:
+        for filename in self._filenames:
             filename = filename.replace('\\', '/')
             image = load_img(filename, target_size=(224, 224))
             image = img_to_array(image)
@@ -32,7 +33,7 @@ class ImageDataset:
             X.append(image)
             y.append(int(filename.split("/")[-2]))
 
-        return X, y
+        return np.array(X), np.array(y)
 
     def split(self, ratio):
         return train_test_split(self.data, self.labels, test_size=ratio, random_state=self._seed)

@@ -4,13 +4,14 @@ import cv2
 import keras
 import numpy
 import numpy as np
-from keras import layers, Sequential
+from keras import Sequential
 from keras.applications.vgg16 import VGG16
-from keras.layers import Flatten, Dense, Dropout
-from keras.optimizers import SGD
+from keras.layers import Flatten, Dense
+from keras.preprocessing.image import ImageDataGenerator
 from sklearn.cross_validation import train_test_split
 
 import config
+from recognition.image_dataset import ImageDataset
 
 
 def find_image_files(path):
@@ -30,10 +31,7 @@ def get_data(filenames):
     return np.array(X), np.array(y)
 
 
-def save_bottlebeck_features(X_train, X_test):
-    # datagen = ImageDataGenerator(rescale=1. / 255)
-
-    # build the VGG16 network
+def save_bottlebeck_features(train_generator, test_generator):
     model = VGG16(include_top=False, weights='imagenet')
 
     # generator = datagen.flow_from_directory(
@@ -42,10 +40,9 @@ def save_bottlebeck_features(X_train, X_test):
     #     batch_size=batch_size,
     #     class_mode=None,
     #     shuffle=False)
-    bottleneck_features_train = model.predict(X_train)
-    # with open(config.BOTTLENECK_TRAIN_FEATURES_PATH, 'w') as file:
-    #     file.write(str(bottleneck_features_train))
-
+    #bottleneck_features_train = model.predict(X_train)
+    bottleneck_features_train = model.predict_generator(
+        train_generator, 21)
     np.save(config.BOTTLENECK_TRAIN_FEATURES_PATH, bottleneck_features_train)
 
     # generator = datagen.flow_from_directory(
@@ -54,10 +51,9 @@ def save_bottlebeck_features(X_train, X_test):
     #     batch_size=batch_size,
     #     class_mode=None,
     #     shuffle=False)
-    bottleneck_features_test = model.predict(X_test)
-    # with open(config.BOTTLENECK_TEST_FEATURES_PATH, 'w') as file:
-    #     file.write(str(bottleneck_features_validation))
-
+    #bottleneck_features_test = model.predict(X_test)
+    bottleneck_features_test = model.predict_generator(
+        test_generator, 9)
     np.save(config.BOTTLENECK_TEST_FEATURES_PATH, bottleneck_features_test)
 
 
@@ -75,21 +71,32 @@ def train_top_model(train_labels, test_labels):
 
     model.fit(train_data, train_labels,
               epochs=50,
-              batch_size=32,
+              batch_size=100,
               validation_data=(test_data, test_labels))
 
     model.save_weights(config.TOP_MODEL_WEIGHTS_PATH)
 
 
 def main():
+    dataset = ImageDataset(config.OUT_PATH, config.SEED)
+    X_train, X_test, y_train, y_test = dataset.split(ratio=0.3)
 
-    X, y = get_data(find_image_files(config.OUT_PATH))
-    y = keras.utils.to_categorical(y, num_classes=50)
-    seed = 7
-    numpy.random.seed(seed)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=seed)
-    # y_train = keras.utils.to_categorical(np.array(y_train), num_classes=50)
-    # y_test = keras.utils.to_categorical(np.array(y_test), num_classes=50)
+    y_train = keras.utils.to_categorical(np.array(y_train), num_classes=50)
+    y_test = keras.utils.to_categorical(np.array(y_test), num_classes=50)
+
+    datagen = ImageDataGenerator(rescale=1. / 255)
+
+    train_generator = datagen.flow(
+        X_train,
+        y_train,
+        batch_size=32,
+        shuffle=False)
+
+    test_generator = datagen.flow(
+        X_test,
+        y_test,
+        batch_size=32,
+        shuffle=False)
 
     # model = VGG16(include_top=False, weights="imagenet", classes=1000,
     #               input_shape=(config.IMAGE_SIZE, config.IMAGE_SIZE, 3))
@@ -116,7 +123,7 @@ def main():
     # Save the model
    # model.save('vgg16_model')
 
-    save_bottlebeck_features(X_train[1:3], X_test[1:3])
+    save_bottlebeck_features(train_generator, test_generator)
     train_top_model(y_train, y_test)
 
 

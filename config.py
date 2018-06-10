@@ -29,6 +29,7 @@ LABELS_PATH = os.path.join(RESOURCES_PATH, 'labels')
 TOP_MODEL_WEIGHTS_PATH = os.path.join(RESOURCES_PATH, 'top_model')
 BOTTLENECK_TRAIN_FEATURES_PATH = os.path.join(RESOURCES_PATH, 'bottleneck_train')
 BOTTLENECK_TEST_FEATURES_PATH = os.path.join(RESOURCES_PATH, 'bottleneck_test')
+SEED = 7
 
 HIDDEN_LAYER_SIZES = (
     (420,),
