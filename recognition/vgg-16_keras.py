@@ -17,7 +17,8 @@ def main(bottleneck_ready=False, top_model_ready=False):
     bottleneck_test, bottleneck_train = load_bottleneck_features(bottleneck_ready, train_generator, test_generator)
     model = build_model(top_model_ready, bottleneck_train, bottleneck_test, y_train, y_test)
 
-    model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
+    sgd = SGD(lr=1e-4, momentum=0.9, nesterov=True)
+    model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
 
     print(model.evaluate(X_test, y_test, batch_size=32))
     print(model.metrics_names)
