@@ -26,7 +26,7 @@ class ImageDataset:
 
         for filename in self._filenames:
             filename = filename.replace('\\', '/')
-            image = load_img(filename, target_size=(224, 224))
+            image = load_img(filename, target_size=(config.IMAGE_SIZE, config.IMAGE_SIZE))
             image = img_to_array(image)
             image = preprocess_input(image)
 

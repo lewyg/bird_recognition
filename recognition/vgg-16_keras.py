@@ -1,149 +1,112 @@
-import glob
-
-import cv2
 import keras
-import numpy
 import numpy as np
 from keras import Sequential, layers, Model
 from keras.applications.vgg16 import VGG16
-from keras.layers import Flatten, Dense
+from keras.layers import Dense
 from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
-from sklearn.cross_validation import train_test_split
 
 import config
 from recognition.image_dataset import ImageDataset
 
 
-def find_image_files(path):
-    pattern = '/**/*.{}'.format(config.IMAGE_FORMAT)
+def main(bottleneck_ready=False, top_model_ready=False):
+    X_train, X_test, y_train, y_test = load_data()
+    test_generator, train_generator = create_data_generators(X_train, X_test, y_train, y_test)
 
-    return [name for name in glob.glob(path + pattern, recursive=True)]
+    bottleneck_test, bottleneck_train = load_bottleneck_features(bottleneck_ready, train_generator, test_generator)
+    model = build_model(top_model_ready, bottleneck_train, bottleneck_test, y_train, y_test)
 
+    model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
 
-def get_data(filenames):
-    X, y = list(), list()
-    for filename in filenames:
-        filename = filename.replace('\\', '/')
-        image = cv2.imread(filename)
-        X.append(image)
-        y.append(int(filename.split("/")[-2]))
+    print(model.evaluate(X_test, y_test, batch_size=32))
+    print(model.metrics_names)
 
-    return np.array(X), np.array(y)
+    return model
 
 
-def save_bottlebeck_features(train_generator, test_generator):
-    model = VGG16(include_top=False, weights='imagenet')
-
-    # generator = datagen.flow_from_directory(
-    #     train_data_dir,
-    #     target_size=(img_width, img_height),
-    #     batch_size=batch_size,
-    #     class_mode=None,
-    #     shuffle=False)
-    # bottleneck_features_train = model.predict(X_train)
-    bottleneck_features_train = model.predict_generator(
-        train_generator, config.TRAIN_EXAMPLES // config.BATCH_SIZE, verbose=1)
-    np.save(config.BOTTLENECK_TRAIN_FEATURES_PATH, bottleneck_features_train)
-
-    # generator = datagen.flow_from_directory(
-    #     validation_data_dir,
-    #     target_size=(img_width, img_height),
-    #     batch_size=batch_size,
-    #     class_mode=None,
-    #     shuffle=False)
-    # bottleneck_features_test = model.predict(X_test)
-    bottleneck_features_test = model.predict_generator(
-        test_generator, config.TEST_EXAMPLES // config.BATCH_SIZE, verbose=1)
-    np.save(config.BOTTLENECK_TEST_FEATURES_PATH, bottleneck_features_test)
-
-
-def train_top_model(train_labels, test_labels):
-    train_data = np.load(config.BOTTLENECK_TRAIN_FEATURES_PATH)
-    test_data = np.load(config.BOTTLENECK_TEST_FEATURES_PATH)
-
-    model = Sequential()
-    model.add(Flatten(input_shape=train_data.shape[1:]))
-    model.add(Dense(config.HIDDEN_LAYER_SIZES[0][0], activation='relu'))
-    model.add(Dense(config.CLASSES, activation='softmax'))
-
-    model.compile(optimizer='rmsprop',
-                  loss='categorical_crossentropy', metrics=['accuracy'])
-
-    model.fit(train_data, train_labels,
-              epochs=config.EPOCHS,
-              batch_size=config.BATCH_SIZE,
-              validation_data=(test_data, test_labels),
-              verbose=1)
-
-    model.save_weights(config.TOP_MODEL_WEIGHTS_PATH)
-
-
-def main():
+def load_data():
     dataset = ImageDataset(config.OUT_PATH, config.SEED)
     X_train, X_test, y_train, y_test = dataset.split(config.TEST_SPLIT_RATIO)
-
     y_train = keras.utils.to_categorical(np.array(y_train), num_classes=config.CLASSES)
     y_test = keras.utils.to_categorical(np.array(y_test), num_classes=config.CLASSES)
 
+    return X_train, X_test, y_train, y_test
+
+
+def create_data_generators(X_train, X_test, y_train, y_test):
     datagen = ImageDataGenerator(rescale=1. / 255)
+    train_generator = datagen.flow(X_train, y_train, batch_size=config.BATCH_SIZE, shuffle=False)
+    test_generator = datagen.flow(X_test, y_test, batch_size=config.BATCH_SIZE, shuffle=False)
 
-    train_generator = datagen.flow(
-        X_train,
-        y_train,
-        batch_size=config.BATCH_SIZE,
-        shuffle=False)
+    return test_generator, train_generator
 
-    test_generator = datagen.flow(
-        X_test,
-        y_test,
-        batch_size=config.BATCH_SIZE,
-        shuffle=False)
 
+def load_bottleneck_features(bottleneck_ready, train_generator, test_generator):
+    if not bottleneck_ready:
+        bottleneck_train, bottleneck_test = predict_bottleneck_features(train_generator, test_generator)
+
+    else:
+        bottleneck_train = np.load(config.BOTTLENECK_TRAIN_FEATURES_PATH)
+        bottleneck_test = np.load(config.BOTTLENECK_TEST_FEATURES_PATH)
+
+    return bottleneck_test, bottleneck_train
+
+
+def predict_bottleneck_features(train_generator, test_generator):
+    model = VGG16(include_top=False, weights='imagenet')
+
+    bottleneck_features_train = model.predict_generator(generator=train_generator,
+                                                        max_queue_size=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
+                                                        verbose=1)
+    np.save(file=config.BOTTLENECK_TRAIN_FEATURES_PATH, arr=bottleneck_features_train)
+
+    bottleneck_features_test = model.predict_generator(generator=test_generator,
+                                                       max_queue_size=config.TEST_EXAMPLES // config.BATCH_SIZE,
+                                                       verbose=1)
+    np.save(file=config.BOTTLENECK_TEST_FEATURES_PATH, arr=bottleneck_features_test)
+
+    return bottleneck_features_train, bottleneck_features_test
+
+
+def build_model(top_model_ready, bottleneck_train, bottleneck_test, y_train, y_test):
     model = VGG16(include_top=False, weights="imagenet", input_shape=(config.IMAGE_SIZE, config.IMAGE_SIZE, 3))
-    # print(model.summary())
+    top_model = create_top_model(model.output_shape[1:])
 
-    #
-    # Add top model
-    top_model = Sequential()
-    top_model.add(layers.Flatten(input_shape=model.output_shape[1:]))
-    top_model.add(layers.Dense(420, activation='relu'))
-    top_model.add(layers.Dense(50, activation='softmax'))
-    top_model.load_weights(config.TOP_MODEL_WEIGHTS_PATH)
+    if top_model_ready:
+        top_model.load_weights(config.TOP_MODEL_WEIGHTS_PATH)
+    else:
+        train_top_model(top_model, bottleneck_train, y_train, bottleneck_test, y_test)
 
-    # model.add(top_model)
+    model = Model(inputs=model.input, outputs=top_model(model.output))
+    model.save(config.GROUND_TRUTH_PATH)
 
-    model = Model(input=model.input, output=top_model(model.output))
+    return model
 
-    for layer in model.layers[:15]:
-        layer.trainable = False
 
+def create_top_model(input_shape):
+    model = Sequential()
+    model.add(layers.Flatten(input_shape=input_shape))
+    model.add(Dense(config.HIDDEN_LAYER_SIZES[0][0], activation='relu'))
+    model.add(Dense(config.CLASSES, activation='softmax'))
+
+    return model
+
+
+def train_top_model(model, X_train, y_train, X_test, y_test):
     sgd = SGD(lr=1e-4, momentum=0.9, nesterov=True)
     model.compile(loss='categorical_crossentropy',
                   optimizer=sgd,
                   metrics=['acc'])
 
-    #model.fit_generator(X_train, y_train, batch_size=config.BATCH_SIZE, epochs=config.EPOCHS)
-    # fine-tune the model
-    history = model.fit_generator(
-        train_generator,
-        steps_per_epoch=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
-        epochs=1,
-        validation_data=test_generator,
-        validation_steps=config.TEST_EXAMPLES // config.BATCH_SIZE,
-        verbose=2)
+    model.fit(X_train, y_train,
+              epochs=config.EPOCHS,
+              batch_size=config.BATCH_SIZE,
+              validation_data=(X_test, y_test),
+              verbose=1)
 
-    print('acc : ', history.history['acc'])
-    print('loss: ', history.history['loss'])
-
-    # print(model.evaluate(X_test, y_test, batch_size=32))
-
-    # Save the model
-    model.save(config.GROUND_TRUTH_PATH)
-
-    # save_bottlebeck_features(train_generator, test_generator)
-    # train_top_model(y_train, y_test)
+    model.save_weights(config.TOP_MODEL_WEIGHTS_PATH)
 
 
 if __name__ == "__main__":
-    main()
+    main(True, True)
