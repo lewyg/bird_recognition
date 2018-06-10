@@ -10,6 +10,10 @@ import config
 from recognition.image_dataset import ImageDataset
 
 
+def t5acc(y_true, y_pred):
+    return keras.metrics.top_k_categorical_accuracy(y_true, y_pred, 5)
+
+
 def main(bottleneck_ready=False, top_model_ready=False):
     X_train, X_test, y_train, y_test = load_data()
     test_generator, train_generator = create_data_generators(X_train, X_test, y_train, y_test)
@@ -17,29 +21,7 @@ def main(bottleneck_ready=False, top_model_ready=False):
     bottleneck_test, bottleneck_train = load_bottleneck_features(bottleneck_ready, train_generator, test_generator)
     model = build_model(top_model_ready, bottleneck_train, bottleneck_test, y_train, y_test)
 
-    sgd = SGD(lr=1e-4, momentum=0.9, nesterov=True)
-    model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
-
-    for layer in model.layers[:15]:
-        layer.trainable = False
-
-    sgd = SGD(lr=1e-6, momentum=0.9, nesterov=True)
-    model.compile(loss='categorical_crossentropy',
-                  optimizer=sgd,
-                  metrics=['acc'])
-
-    # model.fit_generator(X_train, y_train, batch_size=config.BATCH_SIZE, epochs=config.EPOCHS)
-    # fine-tune the model
-    history = model.fit_generator(
-        train_generator,
-        steps_per_epoch=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
-        epochs=1,
-        validation_data=test_generator,
-        validation_steps=config.TEST_EXAMPLES // config.BATCH_SIZE,
-        verbose=2)
-
-    print('acc : ', history.history['acc'])
-    print('loss: ', history.history['loss'])
+    fine_tune_model(model, train_generator, test_generator)
 
     print(model.evaluate_generator(test_generator, verbose=1))
     print(model.metrics_names)
@@ -94,16 +76,18 @@ def predict_bottleneck_features(train_generator, test_generator):
 def build_model(top_model_ready, bottleneck_train, bottleneck_test, y_train, y_test):
     model = VGG16(include_top=False, weights="imagenet", input_shape=(config.IMAGE_SIZE, config.IMAGE_SIZE, 3))
     top_model = create_top_model(model.output_shape[1:])
+
     sgd = SGD(lr=1e-4, momentum=0.9, nesterov=True)
-    top_model.compile(loss='categorical_crossentropy',
-                      optimizer=sgd,
-                      metrics=['acc'])
+    top_model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['acc'])
+
     if top_model_ready:
         top_model.load_weights(config.TOP_MODEL_WEIGHTS_PATH)
+
     else:
         train_top_model(top_model, bottleneck_train, y_train, bottleneck_test, y_test)
 
     print(top_model.evaluate(bottleneck_test, y_test, batch_size=32))
+
     model = Model(inputs=model.input, outputs=top_model(model.output))
     model.save(config.GROUND_TRUTH_PATH)
 
@@ -120,8 +104,13 @@ def create_top_model(input_shape):
 
 
 def train_top_model(model, X_train, y_train, X_test, y_test):
+    early_stopping = keras.callbacks.EarlyStopping(
+        monitor='loss', min_delta=0, patience=3, verbose=0, mode='auto'
+    )
+
     model.fit(X_train, y_train,
-              epochs=config.EPOCHS,
+              epochs=config.TOP_MODEL_MAX_EPOCHS,
+              callbacks=[early_stopping],
               batch_size=config.BATCH_SIZE,
               validation_data=(X_test, y_test),
               verbose=1)
@@ -129,5 +118,24 @@ def train_top_model(model, X_train, y_train, X_test, y_test):
     model.save_weights(config.TOP_MODEL_WEIGHTS_PATH)
 
 
+def fine_tune_model(model, train_generator, test_generator):
+    for layer in model.layers[:15]:
+        layer.trainable = False
+
+    sgd = SGD(lr=1e-5, momentum=0.9, nesterov=True)
+    model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['acc', t5acc])
+
+    history = model.fit_generator(
+        train_generator,
+        steps_per_epoch=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
+        epochs=config.EPOCHS,
+        validation_data=test_generator,
+        validation_steps=config.TEST_EXAMPLES // config.BATCH_SIZE,
+        verbose=2)
+
+    print('acc: ', history.history['acc'])
+    print('loss: ', history.history['loss'])
+
+
 if __name__ == "__main__":
-    main(True, True)
+    main(bottleneck_ready=True, top_model_ready=True)
