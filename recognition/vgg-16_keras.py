@@ -42,7 +42,7 @@ def save_bottlebeck_features(train_generator, test_generator):
     #     shuffle=False)
     #bottleneck_features_train = model.predict(X_train)
     bottleneck_features_train = model.predict_generator(
-        train_generator, config.TRAIN_EXAMPLES // config.BATCH_SIZE)
+        train_generator, config.TRAIN_EXAMPLES // config.BATCH_SIZE, verbose=1)
     np.save(config.BOTTLENECK_TRAIN_FEATURES_PATH, bottleneck_features_train)
 
     # generator = datagen.flow_from_directory(
@@ -53,7 +53,7 @@ def save_bottlebeck_features(train_generator, test_generator):
     #     shuffle=False)
     #bottleneck_features_test = model.predict(X_test)
     bottleneck_features_test = model.predict_generator(
-        test_generator, config.TEST_EXAMPLES // config.BATCH_SIZE)
+        test_generator, config.TEST_EXAMPLES // config.BATCH_SIZE, verbose=1)
     np.save(config.BOTTLENECK_TEST_FEATURES_PATH, bottleneck_features_test)
 
 
@@ -63,7 +63,7 @@ def train_top_model(train_labels, test_labels):
 
     model = Sequential()
     model.add(Flatten(input_shape=train_data.shape[1:]))
-    model.add(Dense(config.HIDDEN_LAYER_SIZES[0], activation='relu'))
+    model.add(Dense(config.HIDDEN_LAYER_SIZES[0][0], activation='relu'))
     model.add(Dense(config.CLASSES, activation='softmax'))
 
     model.compile(optimizer='rmsprop',
@@ -72,14 +72,15 @@ def train_top_model(train_labels, test_labels):
     model.fit(train_data, train_labels,
               epochs=config.EPOCHS,
               batch_size=config.BATCH_SIZE,
-              validation_data=(test_data, test_labels))
+              validation_data=(test_data, test_labels),
+              verbose=1)
 
     model.save_weights(config.TOP_MODEL_WEIGHTS_PATH)
 
 
 def main():
     dataset = ImageDataset(config.OUT_PATH, config.SEED)
-    X_train, X_test, y_train, y_test = dataset.split(1 - config.SPLIT_RATIO)
+    X_train, X_test, y_train, y_test = dataset.split(1 - config.TEST_SPLIT_RATIO)
 
     y_train = keras.utils.to_categorical(np.array(y_train), num_classes=config.CLASSES)
     y_test = keras.utils.to_categorical(np.array(y_test), num_classes=config.CLASSES)
@@ -123,7 +124,7 @@ def main():
     # Save the model
    # model.save('vgg16_model')
 
-    save_bottlebeck_features(train_generator, test_generator)
+    # save_bottlebeck_features(train_generator, test_generator)
     train_top_model(y_train, y_test)
 
 
