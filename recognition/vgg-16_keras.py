@@ -80,7 +80,7 @@ def train_top_model(train_labels, test_labels):
 
 def main():
     dataset = ImageDataset(config.OUT_PATH, config.SEED)
-    X_train, X_test, y_train, y_test = dataset.split(1 - config.TEST_SPLIT_RATIO)
+    X_train, X_test, y_train, y_test = dataset.split(config.TEST_SPLIT_RATIO)
 
     y_train = keras.utils.to_categorical(np.array(y_train), num_classes=config.CLASSES)
     y_test = keras.utils.to_categorical(np.array(y_test), num_classes=config.CLASSES)
