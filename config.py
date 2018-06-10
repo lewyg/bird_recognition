@@ -29,6 +29,7 @@ LABELS_PATH = os.path.join(RESOURCES_PATH, 'labels')
 TOP_MODEL_WEIGHTS_PATH = os.path.join(RESOURCES_PATH, 'top_model')
 BOTTLENECK_TRAIN_FEATURES_PATH = os.path.join(RESOURCES_PATH, 'bottleneck_train.npy')
 BOTTLENECK_TEST_FEATURES_PATH = os.path.join(RESOURCES_PATH, 'bottleneck_test.npy')
+GROUND_TRUTH_PATH = os.path.join(RESOURCES_PATH, 'ground_truth')
 SEED = 7
 
 EXAMPLES = 3000

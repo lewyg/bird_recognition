@@ -4,9 +4,10 @@ import cv2
 import keras
 import numpy
 import numpy as np
-from keras import Sequential
+from keras import Sequential, layers, Model
 from keras.applications.vgg16 import VGG16
 from keras.layers import Flatten, Dense
+from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn.cross_validation import train_test_split
 
@@ -40,7 +41,7 @@ def save_bottlebeck_features(train_generator, test_generator):
     #     batch_size=batch_size,
     #     class_mode=None,
     #     shuffle=False)
-    #bottleneck_features_train = model.predict(X_train)
+    # bottleneck_features_train = model.predict(X_train)
     bottleneck_features_train = model.predict_generator(
         train_generator, config.TRAIN_EXAMPLES // config.BATCH_SIZE, verbose=1)
     np.save(config.BOTTLENECK_TRAIN_FEATURES_PATH, bottleneck_features_train)
@@ -51,7 +52,7 @@ def save_bottlebeck_features(train_generator, test_generator):
     #     batch_size=batch_size,
     #     class_mode=None,
     #     shuffle=False)
-    #bottleneck_features_test = model.predict(X_test)
+    # bottleneck_features_test = model.predict(X_test)
     bottleneck_features_test = model.predict_generator(
         test_generator, config.TEST_EXAMPLES // config.BATCH_SIZE, verbose=1)
     np.save(config.BOTTLENECK_TEST_FEATURES_PATH, bottleneck_features_test)
@@ -99,33 +100,49 @@ def main():
         batch_size=config.BATCH_SIZE,
         shuffle=False)
 
-    # model = VGG16(include_top=False, weights="imagenet", classes=1000,
-    #               input_shape=(config.IMAGE_SIZE, config.IMAGE_SIZE, 3))
+    model = VGG16(include_top=False, weights="imagenet", input_shape=(config.IMAGE_SIZE, config.IMAGE_SIZE, 3))
     # print(model.summary())
 
     #
-    # # Add top model
-    # top_model = Sequential()
-    # top_model.add(layers.Flatten(input_shape=model.output_shape[1:]))
-    # top_model.add(layers.Dense(420, activation='relu'))
-    # top_model.add(layers.Dense(50, activation='softmax'))
-    # top_model.load_weights(config.TOP_MODEL_WEIGHTS_PATH)
+    # Add top model
+    top_model = Sequential()
+    top_model.add(layers.Flatten(input_shape=model.output_shape[1:]))
+    top_model.add(layers.Dense(420, activation='relu'))
+    top_model.add(layers.Dense(50, activation='softmax'))
+    top_model.load_weights(config.TOP_MODEL_WEIGHTS_PATH)
 
     # model.add(top_model)
 
-    # sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
-    # model.compile(loss='categorical_crossentropy',
-    #               optimizer=sgd,
-    #               metrics=['acc'])
+    model = Model(input=model.input, output=top_model(model.output))
 
-    #model.fit(X_train, y_train, batch_size=100, epochs=30)
-    #print(model.evaluate(X_test, y_test, batch_size=32))
+    for layer in model.layers[:15]:
+        layer.trainable = False
+
+    sgd = SGD(lr=1e-4, momentum=0.9, nesterov=True)
+    model.compile(loss='categorical_crossentropy',
+                  optimizer=sgd,
+                  metrics=['acc'])
+
+    #model.fit_generator(X_train, y_train, batch_size=config.BATCH_SIZE, epochs=config.EPOCHS)
+    # fine-tune the model
+    history = model.fit_generator(
+        train_generator,
+        steps_per_epoch=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
+        epochs=1,
+        validation_data=test_generator,
+        validation_steps=config.TEST_EXAMPLES // config.BATCH_SIZE,
+        verbose=2)
+
+    print('acc : ', history.history['acc'])
+    print('loss: ', history.history['loss'])
+
+    # print(model.evaluate(X_test, y_test, batch_size=32))
 
     # Save the model
-   # model.save('vgg16_model')
+    model.save(config.GROUND_TRUTH_PATH)
 
     # save_bottlebeck_features(train_generator, test_generator)
-    train_top_model(y_train, y_test)
+    # train_top_model(y_train, y_test)
 
 
 if __name__ == "__main__":
