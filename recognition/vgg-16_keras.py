@@ -20,7 +20,28 @@ def main(bottleneck_ready=False, top_model_ready=False):
     sgd = SGD(lr=1e-4, momentum=0.9, nesterov=True)
     model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
 
-    print(model.evaluate(X_test, y_test, batch_size=32))
+    for layer in model.layers[:15]:
+        layer.trainable = False
+
+    sgd = SGD(lr=1e-6, momentum=0.9, nesterov=True)
+    model.compile(loss='categorical_crossentropy',
+                  optimizer=sgd,
+                  metrics=['acc'])
+
+    #model.fit_generator(X_train, y_train, batch_size=config.BATCH_SIZE, epochs=config.EPOCHS)
+    # fine-tune the model
+    history = model.fit_generator(
+        train_generator,
+        steps_per_epoch=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
+        epochs=1,
+        validation_data=test_generator,
+        validation_steps=config.TEST_EXAMPLES // config.BATCH_SIZE,
+        verbose=2)
+
+    print('acc : ', history.history['acc'])
+    print('loss: ', history.history['loss'])
+
+    print(model.evaluate(X_test, y_test, batch_size=config.BATCH_SIZE))
     print(model.metrics_names)
 
     return model
@@ -73,12 +94,16 @@ def predict_bottleneck_features(train_generator, test_generator):
 def build_model(top_model_ready, bottleneck_train, bottleneck_test, y_train, y_test):
     model = VGG16(include_top=False, weights="imagenet", input_shape=(config.IMAGE_SIZE, config.IMAGE_SIZE, 3))
     top_model = create_top_model(model.output_shape[1:])
-
+    sgd = SGD(lr=1e-4, momentum=0.9, nesterov=True)
+    top_model.compile(loss='categorical_crossentropy',
+                  optimizer=sgd,
+                  metrics=['acc'])
     if top_model_ready:
         top_model.load_weights(config.TOP_MODEL_WEIGHTS_PATH)
     else:
         train_top_model(top_model, bottleneck_train, y_train, bottleneck_test, y_test)
 
+    print(top_model.evaluate(bottleneck_test, y_test, batch_size=32))
     model = Model(inputs=model.input, outputs=top_model(model.output))
     model.save(config.GROUND_TRUTH_PATH)
 
@@ -95,11 +120,6 @@ def create_top_model(input_shape):
 
 
 def train_top_model(model, X_train, y_train, X_test, y_test):
-    sgd = SGD(lr=1e-4, momentum=0.9, nesterov=True)
-    model.compile(loss='categorical_crossentropy',
-                  optimizer=sgd,
-                  metrics=['acc'])
-
     model.fit(X_train, y_train,
               epochs=config.EPOCHS,
               batch_size=config.BATCH_SIZE,
