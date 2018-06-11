@@ -14,14 +14,14 @@ def t5acc(y_true, y_pred):
     return keras.metrics.top_k_categorical_accuracy(y_true, y_pred, 5)
 
 
-def main(bottleneck_ready=False, top_model_ready=False):
+def main(bottleneck_ready=False, top_model_ready=False, ground_truth_ready=False):
     X_train, X_test, y_train, y_test = load_data()
     test_generator, train_generator = create_data_generators(X_train, X_test, y_train, y_test)
 
     bottleneck_test, bottleneck_train = load_bottleneck_features(bottleneck_ready, train_generator, test_generator)
     model = build_model(top_model_ready, bottleneck_train, bottleneck_test, y_train, y_test)
 
-    fine_tune_model(model, train_generator, test_generator)
+    fine_tune_model(ground_truth_ready, model, train_generator, test_generator)
 
     print(model.evaluate_generator(test_generator, verbose=1))
     print(model.metrics_names)
@@ -89,7 +89,6 @@ def build_model(top_model_ready, bottleneck_train, bottleneck_test, y_train, y_t
     print(top_model.evaluate(bottleneck_test, y_test, batch_size=32))
 
     model = Model(inputs=model.input, outputs=top_model(model.output))
-    model.save(config.GROUND_TRUTH_PATH)
 
     return model
 
@@ -118,24 +117,27 @@ def train_top_model(model, X_train, y_train, X_test, y_test):
     model.save_weights(config.TOP_MODEL_WEIGHTS_PATH)
 
 
-def fine_tune_model(model, train_generator, test_generator):
-    for layer in model.layers[:15]:
-        layer.trainable = False
+def fine_tune_model(ground_truth_ready, model, train_generator, test_generator):
+    if ground_truth_ready:
+        model.load_weights(config.GROUND_TRUTH_PATH)
 
-    sgd = SGD(lr=1e-5, momentum=0.9, nesterov=True)
-    model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['acc', t5acc])
+    else:
+        for layer in model.layers[:15]:
+            layer.trainable = False
 
-    history = model.fit_generator(
-        train_generator,
-        steps_per_epoch=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
-        epochs=config.EPOCHS,
-        validation_data=test_generator,
-        validation_steps=config.TEST_EXAMPLES // config.BATCH_SIZE,
-        verbose=2)
+        history = model.fit_generator(
+            train_generator,
+            steps_per_epoch=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
+            epochs=config.EPOCHS,
+            validation_data=test_generator,
+            validation_steps=config.TEST_EXAMPLES // config.BATCH_SIZE,
+            verbose=2)
 
-    print('acc: ', history.history['acc'])
-    print('loss: ', history.history['loss'])
+        print('acc: ', history.history['acc'])
+        print('loss: ', history.history['loss'])
+
+        model.save(config.GROUND_TRUTH_PATH)
 
 
 if __name__ == "__main__":
-    main(bottleneck_ready=True, top_model_ready=True)
+    main(bottleneck_ready=False, top_model_ready=False, ground_truth_ready=False)
