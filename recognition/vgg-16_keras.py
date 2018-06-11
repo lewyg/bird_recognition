@@ -143,4 +143,4 @@ def fine_tune_model(ground_truth_ready, model, train_generator, test_generator):
 
 
 if __name__ == "__main__":
-    main(bottleneck_ready=True, top_model_ready=True, ground_truth_ready=False)
+    main(bottleneck_ready=False, top_model_ready=False, ground_truth_ready=False)
