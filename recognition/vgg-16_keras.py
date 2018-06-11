@@ -118,6 +118,9 @@ def train_top_model(model, X_train, y_train, X_test, y_test):
 
 
 def fine_tune_model(ground_truth_ready, model, train_generator, test_generator):
+    sgd = SGD(lr=1e-5, momentum=0.9, nesterov=True)
+    model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['acc', t5acc])
+
     if ground_truth_ready:
         model.load_weights(config.GROUND_TRUTH_PATH)
 
@@ -140,4 +143,4 @@ def fine_tune_model(ground_truth_ready, model, train_generator, test_generator):
 
 
 if __name__ == "__main__":
-    main(bottleneck_ready=False, top_model_ready=False, ground_truth_ready=False)
+    main(bottleneck_ready=True, top_model_ready=True, ground_truth_ready=False)
