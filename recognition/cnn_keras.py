@@ -1,7 +1,7 @@
 import keras
 import numpy as np
 from keras import Sequential
-from keras.layers import Dense, Conv2D, MaxPooling2D, Dropout, Flatten
+from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
 from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
 
@@ -47,19 +47,34 @@ def create_data_generators(X_train, X_test, y_train, y_test):
 def create_model():
     model = Sequential()
     input_shape = (config.IMAGE_SIZE, config.IMAGE_SIZE, 3)
+
+    # Block 1
     model.add(Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=input_shape))
     model.add(Conv2D(32, (3, 3), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
+    # Block 2
     model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
     model.add(Conv2D(64, (3, 3), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
+    # Block 3 - optional
     model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
     model.add(Conv2D(64, (3, 3), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
+    # Block 4
+    model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(128, (3, 3), activation='relu'))
+    model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(128, (3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+
+    # Classification block
     model.add(Flatten())
+    model.add(Dense(4096, activation='relu'))
     model.add(Dense(config.HIDDEN_LAYER_SIZES[0][0], activation='relu'))
     model.add(Dense(config.CLASSES, activation='softmax'))
 
