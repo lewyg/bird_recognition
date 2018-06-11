@@ -23,7 +23,7 @@ def main(bottleneck_ready=False, top_model_ready=False, ground_truth_ready=False
 
     fine_tune_model(ground_truth_ready, model, train_generator, test_generator)
 
-    print(model.evaluate_generator(test_generator, verbose=1))
+    print(model.evaluate_generator(test_generator))
     print(model.metrics_names)
 
     return model

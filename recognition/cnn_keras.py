@@ -21,7 +21,7 @@ def main():
 
     train_model(model, train_generator, test_generator)
 
-    print(model.evaluate_generator(test_generator, verbose=1))
+    print(model.evaluate_generator(test_generator))
     print(model.metrics_names)
 
     return model
@@ -59,9 +59,9 @@ def create_model():
     model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
     # Block 3 - optional
-    model.add(Conv2D(64, (5, 5), padding='same', activation='relu'))
-    model.add(Conv2D(64, (5, 5), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    # model.add(Conv2D(64, (5, 5), padding='same', activation='relu'))
+    # model.add(Conv2D(64, (5, 5), activation='relu'))
+    # model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
     # Block 4
     model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
