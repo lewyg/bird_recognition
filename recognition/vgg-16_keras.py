@@ -107,7 +107,7 @@ def create_top_model(input_shape):
 
 def train_top_model(model, X_train, y_train, X_test, y_test):
     history = model.fit(X_train, y_train,
-                        epochs=3,
+                        epochs=150,
                         batch_size=config.BATCH_SIZE,
                         validation_data=(X_test, y_test),
                         verbose=1)
