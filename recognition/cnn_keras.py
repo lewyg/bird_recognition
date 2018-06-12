@@ -30,7 +30,7 @@ def plot_history(history):
     plt.plot(history.history['val_t5acc'], label='val_top-5')
     plt.legend(loc="lower right")
 
-    name = 'cnn_history.png'.format(layers, config.LBP_RADIUS)
+    name = 'cnn_rotate_translate_history.png'.format(layers, config.LBP_RADIUS)
 
     plt.savefig(figure_path(name))
     plt.clf()
@@ -71,22 +71,23 @@ def rotate_generator():
 
 def translate_generator():
     return ImageDataGenerator(rescale=1. / 255,
-                              width_shift_range=0.1,
-                              height_shift_range=0.1,
+                              width_shift_range=0.2,
+                              height_shift_range=0.2,
                               fill_mode="reflect")
 
 
 def rotate_translate_generator():
     return ImageDataGenerator(rescale=1. / 255,
                               rotation_range=8,
-                              width_shift_range=0.1,
-                              height_shift_range=0.1,
+                              width_shift_range=0.2,
+                              height_shift_range=0.2,
                               fill_mode="reflect")
 
 
 def create_data_generators(X_train, X_test, y_train, y_test, datagen):
+    datagen_test = normal_generator()
     train_generator = datagen.flow(X_train, y_train, batch_size=config.BATCH_SIZE, shuffle=False)
-    test_generator = datagen.flow(X_test, y_test, batch_size=config.BATCH_SIZE, shuffle=False)
+    test_generator = datagen_test.flow(X_test, y_test, batch_size=config.BATCH_SIZE, shuffle=False)
 
     return test_generator, train_generator
 
@@ -108,26 +109,37 @@ def create_model():
     # Block 3 - optional
     model.add(Conv2D(64, (5, 5), padding='same', activation='relu'))
     model.add(Conv2D(64, (5, 5), activation='relu'))
-    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+
+    # Block 4
+    model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(128, (3, 3), activation='relu'))
+    model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(128, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
     # Classification block
     model.add(Flatten())
-    model.add(Dense(1024, activation='relu'))
+    model.add(Dense(4096, activation='relu'))
+    model.add(Dense(config.HIDDEN_LAYER_SIZES[0][0], activation='relu'))
     model.add(Dense(config.CLASSES, activation='softmax'))
 
     return model
 
 
 def train_model(model, train_generator, test_generator):
-    sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
+    learning_rate = 0.005
+    epochs = 200
+    decay_rate = learning_rate / epochs
+    momentum = 0.8
+
+    sgd = SGD(lr=learning_rate, momentum=momentum, decay=decay_rate, nesterov=False)
     model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['acc', t5acc])
 
     history = model.fit_generator(
         train_generator,
         steps_per_epoch=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
-        epochs=100,
+        epochs=epochs,
         validation_data=test_generator,
         validation_steps=config.TEST_EXAMPLES // config.BATCH_SIZE,
         verbose=2)
@@ -139,6 +151,6 @@ def train_model(model, train_generator, test_generator):
 
 
 if __name__ == "__main__":
-    datagen = normal_generator()
+    datagen = rotate_translate_generator()
 
     main(datagen)
