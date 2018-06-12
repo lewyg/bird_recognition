@@ -99,7 +99,6 @@ def build_model(top_model_ready, bottleneck_train, bottleneck_test, y_train, y_t
 def create_top_model(input_shape):
     model = Sequential()
     model.add(layers.Flatten(input_shape=input_shape))
-    model.add(Dense(4096, activation='relu'))
     model.add(Dense(config.HIDDEN_LAYER_SIZES[0][0], activation='relu'))
     model.add(Dense(config.CLASSES, activation='softmax'))
 
@@ -107,13 +106,8 @@ def create_top_model(input_shape):
 
 
 def train_top_model(model, X_train, y_train, X_test, y_test):
-    early_stopping = keras.callbacks.EarlyStopping(
-        monitor='loss', min_delta=0, patience=3, verbose=0, mode='auto'
-    )
-
     history = model.fit(X_train, y_train,
-                        epochs=config.TOP_MODEL_MAX_EPOCHS,
-                        callbacks=[early_stopping],
+                        epochs=3,
                         batch_size=config.BATCH_SIZE,
                         validation_data=(X_test, y_test),
                         verbose=1)
@@ -143,6 +137,9 @@ def plot_history(history):
 
 
 def fine_tune_model(ground_truth_ready, model, train_generator, test_generator):
+    for layer in model.layers[:15]:
+        layer.trainable = False
+
     sgd = SGD(lr=1e-5, momentum=0.9, nesterov=True)
     model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['acc', t5acc])
 
@@ -150,9 +147,6 @@ def fine_tune_model(ground_truth_ready, model, train_generator, test_generator):
         model.load_weights(config.GROUND_TRUTH_PATH)
 
     else:
-        for layer in model.layers[:15]:
-            layer.trainable = False
-
         history = model.fit_generator(
             train_generator,
             steps_per_epoch=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
@@ -168,4 +162,4 @@ def fine_tune_model(ground_truth_ready, model, train_generator, test_generator):
 
 
 if __name__ == "__main__":
-    main(bottleneck_ready=False, top_model_ready=False, ground_truth_ready=False)
+    main(bottleneck_ready=True, top_model_ready=False, ground_truth_ready=False)
