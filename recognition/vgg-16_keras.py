@@ -99,7 +99,6 @@ def build_model(top_model_ready, bottleneck_train, bottleneck_test, y_train, y_t
 def create_top_model(input_shape):
     model = Sequential()
     model.add(layers.Flatten(input_shape=input_shape))
-    model.add(Dense(4096, activation='relu'))
     model.add(Dense(config.HIDDEN_LAYER_SIZES[0][0], activation='relu'))
     model.add(Dense(config.CLASSES, activation='softmax'))
 
