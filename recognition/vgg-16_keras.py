@@ -1,3 +1,5 @@
+import os
+
 import keras
 import matplotlib.pyplot as plt
 import numpy as np
@@ -122,7 +124,7 @@ def train_top_model(model, X_train, y_train, X_test, y_test):
 
 
 def figure_path(name):
-    return config.PLOT_PATH / name
+    return os.path.join(config.PLOT_PATH, name)
 
 
 def plot_history(history):

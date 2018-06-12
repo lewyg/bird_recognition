@@ -7,3 +7,4 @@ scikit-image
 numpy
 opencv-python
 h5py
+graphviz
