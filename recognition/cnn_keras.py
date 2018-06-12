@@ -65,7 +65,7 @@ def normal_generator():
 
 def rotate_generator():
     return ImageDataGenerator(rescale=1. / 255,
-                              rotation_range=5,
+                              rotation_range=8,
                               fill_mode="reflect")
 
 
@@ -78,7 +78,7 @@ def translate_generator():
 
 def rotate_translate_generator():
     return ImageDataGenerator(rescale=1. / 255,
-                              rotation_range=5,
+                              rotation_range=8,
                               width_shift_range=0.1,
                               height_shift_range=0.1,
                               fill_mode="reflect")
