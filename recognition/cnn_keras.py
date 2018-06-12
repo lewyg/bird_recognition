@@ -1,7 +1,9 @@
 import keras
 import numpy as np
+import matplotlib.pyplot as plt
 from keras import Sequential
 from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
+from keras.legacy import layers
 from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
 
@@ -11,6 +13,25 @@ from recognition.image_dataset import ImageDataset
 
 def t5acc(y_true, y_pred):
     return keras.metrics.top_k_categorical_accuracy(y_true, y_pred, 5)
+
+
+def figure_path(name):
+    return np.os.path.join(config.PLOT_PATH, name)
+
+
+def plot_history(history):
+    plt.xlabel('Numer epoki')
+    plt.ylabel('Accuracy')
+    plt.plot(history.history['acc'], label='train_top-1')
+    plt.plot(history.history['t5acc'], label='train_top-5')
+    plt.plot(history.history['val_acc'], label='val_top-1')
+    plt.plot(history.history['val_t5acc'], label='val_top-5')
+    plt.legend(loc="lower right")
+
+    name = 'cnn_history.png'.format(layers, config.LBP_RADIUS)
+
+    plt.savefig(figure_path(name))
+    plt.clf()
 
 
 def main():
@@ -74,19 +95,21 @@ def create_model():
 
 
 def train_model(model, train_generator, test_generator):
-    sgd = SGD(lr=1e-5, momentum=0.9, nesterov=True)
+    sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
     model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['acc', t5acc])
 
     history = model.fit_generator(
         train_generator,
         steps_per_epoch=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
-        epochs=config.VGG_EPOCHS,
+        epochs=100,
         validation_data=test_generator,
         validation_steps=config.TEST_EXAMPLES // config.BATCH_SIZE,
         verbose=2)
 
     print('acc: ', history.history['acc'])
     print('loss: ', history.history['loss'])
+
+    plot_history(history)
 
 
 if __name__ == "__main__":
