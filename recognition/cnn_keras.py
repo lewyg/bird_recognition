@@ -1,6 +1,6 @@
 import keras
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from keras import Sequential
 from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
 from keras.legacy import layers
@@ -34,9 +34,9 @@ def plot_history(history):
     plt.clf()
 
 
-def main():
+def main(datagen):
     X_train, X_test, y_train, y_test = load_data()
-    test_generator, train_generator = create_data_generators(X_train, X_test, y_train, y_test)
+    test_generator, train_generator = create_data_generators(X_train, X_test, y_train, y_test, datagen)
 
     model = create_model()
 
@@ -57,8 +57,32 @@ def load_data():
     return X_train, X_test, y_train, y_test
 
 
-def create_data_generators(X_train, X_test, y_train, y_test):
-    datagen = ImageDataGenerator(rescale=1. / 255)
+def normal_generator():
+    return ImageDataGenerator(rescale=1. / 255)
+
+
+def rotate_generator():
+    return ImageDataGenerator(rescale=1. / 255,
+                              rotation_range=5,
+                              fill_mode="reflect")
+
+
+def translate_generator():
+    return ImageDataGenerator(rescale=1. / 255,
+                              width_shift_range=0.1,
+                              height_shift_range=0.1,
+                              fill_mode="reflect")
+
+
+def rotate_translate_generator():
+    return ImageDataGenerator(rescale=1. / 255,
+                              rotation_range=5,
+                              width_shift_range=0.1,
+                              height_shift_range=0.1,
+                              fill_mode="reflect")
+
+
+def create_data_generators(X_train, X_test, y_train, y_test, datagen):
     train_generator = datagen.flow(X_train, y_train, batch_size=config.BATCH_SIZE, shuffle=False)
     test_generator = datagen.flow(X_test, y_test, batch_size=config.BATCH_SIZE, shuffle=False)
 
@@ -113,4 +137,6 @@ def train_model(model, train_generator, test_generator):
 
 
 if __name__ == "__main__":
-    main()
+    datagen = normal_generator()
+
+    main(datagen)
