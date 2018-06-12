@@ -1,3 +1,5 @@
+import os
+
 import keras
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,7 +18,7 @@ def t5acc(y_true, y_pred):
 
 
 def figure_path(name):
-    return np.os.path.join(config.PLOT_PATH, name)
+    return os.path.join(config.PLOT_PATH, name)
 
 
 def plot_history(history):
