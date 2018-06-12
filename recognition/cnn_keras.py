@@ -59,21 +59,15 @@ def create_model():
     model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
     # Block 3 - optional
-    # model.add(Conv2D(64, (5, 5), padding='same', activation='relu'))
-    # model.add(Conv2D(64, (5, 5), activation='relu'))
-    # model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-
-    # Block 4
-    model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(128, (3, 3), activation='relu'))
-    model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(128, (3, 3), activation='relu'))
+    model.add(Conv2D(64, (5, 5), padding='same', activation='relu'))
+    model.add(Conv2D(64, (5, 5), activation='relu'))
+    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(64, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
     # Classification block
     model.add(Flatten())
-    model.add(Dense(4096, activation='relu'))
-    model.add(Dense(config.HIDDEN_LAYER_SIZES[0][0], activation='relu'))
+    model.add(Dense(1024, activation='relu'))
     model.add(Dense(config.CLASSES, activation='softmax'))
 
     return model
