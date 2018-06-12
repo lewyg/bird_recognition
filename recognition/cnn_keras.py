@@ -86,7 +86,7 @@ def train_model(model, train_generator, test_generator):
     history = model.fit_generator(
         train_generator,
         steps_per_epoch=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
-        epochs=config.EPOCHS,
+        epochs=config.VGG_EPOCHS,
         validation_data=test_generator,
         validation_steps=config.TEST_EXAMPLES // config.BATCH_SIZE,
         verbose=2)

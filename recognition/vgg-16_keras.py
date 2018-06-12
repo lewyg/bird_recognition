@@ -1,4 +1,5 @@
 import keras
+import matplotlib.pyplot as plt
 import numpy as np
 from keras import Sequential, layers, Model
 from keras.applications.vgg16 import VGG16
@@ -78,7 +79,7 @@ def build_model(top_model_ready, bottleneck_train, bottleneck_test, y_train, y_t
     top_model = create_top_model(model.output_shape[1:])
 
     sgd = SGD(lr=1e-4, momentum=0.9, nesterov=True)
-    top_model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['acc'])
+    top_model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['acc', t5acc])
 
     if top_model_ready:
         top_model.load_weights(config.TOP_MODEL_WEIGHTS_PATH)
@@ -96,6 +97,7 @@ def build_model(top_model_ready, bottleneck_train, bottleneck_test, y_train, y_t
 def create_top_model(input_shape):
     model = Sequential()
     model.add(layers.Flatten(input_shape=input_shape))
+    model.add(Dense(4096, activation='relu'))
     model.add(Dense(config.HIDDEN_LAYER_SIZES[0][0], activation='relu'))
     model.add(Dense(config.CLASSES, activation='softmax'))
 
@@ -107,14 +109,35 @@ def train_top_model(model, X_train, y_train, X_test, y_test):
         monitor='loss', min_delta=0, patience=3, verbose=0, mode='auto'
     )
 
-    model.fit(X_train, y_train,
-              epochs=config.TOP_MODEL_MAX_EPOCHS,
-              callbacks=[early_stopping],
-              batch_size=config.BATCH_SIZE,
-              validation_data=(X_test, y_test),
-              verbose=1)
+    history = model.fit(X_train, y_train,
+                        epochs=config.TOP_MODEL_MAX_EPOCHS,
+                        callbacks=[early_stopping],
+                        batch_size=config.BATCH_SIZE,
+                        validation_data=(X_test, y_test),
+                        verbose=1)
+
+    plot_history(history)
 
     model.save_weights(config.TOP_MODEL_WEIGHTS_PATH)
+
+
+def figure_path(name):
+    return config.PLOT_PATH / name
+
+
+def plot_history(history):
+    plt.xlabel('Numer epoki')
+    plt.ylabel('Accuracy')
+    plt.plot(history.history['acc'], label='train_top-1')
+    plt.plot(history.history['t5acc'], label='train_top-5')
+    plt.plot(history.history['val_acc'], label='val_top-1')
+    plt.plot(history.history['val_t5acc'], label='val_top-5')
+    plt.legend(loc="lower right")
+
+    name = 'tommodel_history.png'.format(layers, config.LBP_RADIUS)
+
+    plt.savefig(figure_path(name))
+    plt.clf()
 
 
 def fine_tune_model(ground_truth_ready, model, train_generator, test_generator):
@@ -131,7 +154,7 @@ def fine_tune_model(ground_truth_ready, model, train_generator, test_generator):
         history = model.fit_generator(
             train_generator,
             steps_per_epoch=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
-            epochs=config.EPOCHS,
+            epochs=config.VGG_EPOCHS,
             validation_data=test_generator,
             validation_steps=config.TEST_EXAMPLES // config.BATCH_SIZE,
             verbose=2)
