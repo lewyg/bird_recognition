@@ -81,8 +81,8 @@ def load_bottleneck_features(bottleneck_ready, train_generator, test_generator, 
         bottleneck_train, bottleneck_test = predict_bottleneck_features(train_generator, test_generator, layers_removed)
 
     else:
-        bottleneck_train = np.load(config.SVM_BOTTLENECK_TRAIN_FEATURES_PATH + str(layers_removed))
-        bottleneck_test = np.load(config.SVM_BOTTLENECK_TEST_FEATURES_PATH + str(layers_removed))
+        bottleneck_train = np.load(config.SVM_BOTTLENECK_TRAIN_FEATURES_PATH.format(str(layers_removed)))
+        bottleneck_test = np.load(config.SVM_BOTTLENECK_TEST_FEATURES_PATH.format(str(layers_removed)))
 
     return bottleneck_test, bottleneck_train
 
@@ -93,12 +93,12 @@ def predict_bottleneck_features(train_generator, test_generator, layers_removed)
     bottleneck_features_train = model.predict_generator(generator=train_generator,
                                                         max_queue_size=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
                                                         verbose=1)
-    np.save(file=config.SVM_BOTTLENECK_TRAIN_FEATURES_PATH + str(layers_removed), arr=bottleneck_features_train)
+    np.save(file=config.SVM_BOTTLENECK_TRAIN_FEATURES_PATH.format(str(layers_removed)), arr=bottleneck_features_train)
 
     bottleneck_features_test = model.predict_generator(generator=test_generator,
                                                        max_queue_size=config.TEST_EXAMPLES // config.BATCH_SIZE,
                                                        verbose=1)
-    np.save(file=config.SVM_BOTTLENECK_TEST_FEATURES_PATH + str(layers_removed), arr=bottleneck_features_test)
+    np.save(file=config.SVM_BOTTLENECK_TEST_FEATURES_PATH.format(str(layers_removed)), arr=bottleneck_features_test)
 
     return bottleneck_features_train, bottleneck_features_test
 
@@ -136,4 +136,4 @@ def create_data_generators(X_train, X_test, y_train, y_test):
 
 
 if __name__ == "__main__":
-    main(bottleneck_ready=True, layers_removed=3)
+    main(bottleneck_ready=False, layers_removed=1)

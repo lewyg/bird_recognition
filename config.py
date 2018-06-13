@@ -64,8 +64,8 @@ HIDE = os.path.join(RESOURCES_PATH, 'hide')
 BEST_MODEL_PATH = os.path.join(RESOURCES_PATH, 'dropout')
 
 # SVM
-SVM_BOTTLENECK_TRAIN_FEATURES_PATH = os.path.join(RESOURCES_PATH, 'svm_bottleneck_train.npy')
-SVM_BOTTLENECK_TEST_FEATURES_PATH = os.path.join(RESOURCES_PATH, 'svm_bottleneck_test.npy')
+SVM_BOTTLENECK_TRAIN_FEATURES_PATH = os.path.join(RESOURCES_PATH, 'svm_bottleneck_train{}.npy')
+SVM_BOTTLENECK_TEST_FEATURES_PATH = os.path.join(RESOURCES_PATH, 'svm_bottleneck_test{}.npy')
 
 SVM_SETTING = [
     ('linear', dict(kernel='linear')),
