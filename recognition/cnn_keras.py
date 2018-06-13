@@ -51,9 +51,34 @@ def main(datagen):
     return model
 
 
+def hide_part(img):
+    if random() > 0.3:
+        size_a = int(random() * 80) + 20
+        size_b = int(random() * 80) + 20
+        a = int(random() * (223 - size_a))
+        b = int(random() * (223 - size_b))
+        img[a:a + size_a, b:b + size_b] = np.zeros((size_a, size_b, 3))
+
+
+def add_noise(img):
+    if np.random.random() > 0.3:
+        noise_shape = img.shape
+        noise = 10 * np.random.randn(*noise_shape)
+        img[:] = img + noise
+
+
 def load_data():
     dataset = ImageDataset(config.OUT_PATH, config.SEED)
     X_train, X_test, y_train, y_test = dataset.split(config.TEST_SPLIT_RATIO)
+
+    # apply noise
+    for img in X_train:
+        add_noise(img)
+
+    # apply hide_part
+    for img in X_train:
+        hide_part(img)
+
     y_train = keras.utils.to_categorical(np.array(y_train), num_classes=config.CLASSES)
     y_test = keras.utils.to_categorical(np.array(y_test), num_classes=config.CLASSES)
 
@@ -83,40 +108,6 @@ def rotate_translate_generator():
                               width_shift_range=0.2,
                               height_shift_range=0.2,
                               fill_mode="reflect")
-
-
-def hide_generator():
-    def hide_part(img):
-        if random() > 0.3:
-            size_a = int(random() * 80) + 20
-            size_b = int(random() * 80) + 20
-            a = int(random() * (223 - size_a))
-            b = int(random() * (223 - size_b))
-            img[a:a + size_a, b:b + size_b] = np.zeros((size_a, size_b, 3))
-        return img
-
-    return ImageDataGenerator(rescale=1. / 255,
-                              rotation_range=8,
-                              width_shift_range=0.2,
-                              height_shift_range=0.2,
-                              fill_mode="reflect",
-                              preprocessing_function=hide_part)
-
-
-def noise_generator():
-    def noise(img):
-        if random() > 0.3:
-            noise_shape = img.shape
-            noise = 10 * np.random.randn(*noise_shape)
-            img = img + noise
-        return img
-
-    return ImageDataGenerator(rescale=1. / 255,
-                              rotation_range=8,
-                              width_shift_range=0.2,
-                              height_shift_range=0.2,
-                              fill_mode="reflect",
-                              preprocessing_function=noise)
 
 
 def create_data_generators(X_train, X_test, y_train, y_test, datagen):
