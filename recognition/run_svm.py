@@ -17,6 +17,8 @@ def main(bottleneck_ready=False, layers_removed=3):
 
     X_test, X_train = load_bottleneck_features(bottleneck_ready, train_generator, test_generator, layers_removed)
 
+    print(f"Train: {len(X_train)}, test: {len(X_test)}")
+
     for setting in config.SVM_SETTING:
         start = datetime.now()
         model = svm.SVC(**setting[1])
