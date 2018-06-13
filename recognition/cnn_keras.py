@@ -5,7 +5,7 @@ import keras
 import matplotlib.pyplot as plt
 import numpy as np
 from keras import Sequential
-from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
+from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout
 from keras.legacy import layers
 from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
@@ -31,7 +31,7 @@ def plot_history(history):
     plt.plot(history.history['val_t5acc'], label='val_top-5')
     plt.legend(loc="lower right")
 
-    name = 'cnn_rotate_translate_history.png'.format(layers, config.LBP_RADIUS)
+    name = 'cnn_hide_history.png'.format(layers, config.LBP_RADIUS)
 
     plt.savefig(figure_path(name))
     plt.clf()
@@ -52,7 +52,7 @@ def main(datagen):
 
 
 def hide_part(img):
-    if random() > 0.3:
+    if random() > 0.6:
         size_a = int(random() * 80) + 20
         size_b = int(random() * 80) + 20
         a = int(random() * (223 - size_a))
@@ -71,9 +71,9 @@ def load_data():
     dataset = ImageDataset(config.OUT_PATH, config.SEED)
     X_train, X_test, y_train, y_test = dataset.split(config.TEST_SPLIT_RATIO)
 
-    # apply noise
-    for img in X_train:
-        add_noise(img)
+    # # apply noise
+    # for img in X_train:
+    #     add_noise(img)
 
     # apply hide_part
     for img in X_train:
@@ -142,7 +142,8 @@ def create_model():
     model.add(Conv2D(128, (3, 3), activation='relu'))
     model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
     model.add(Conv2D(128, (3, 3), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(MaxPooling2D(pool_size=(4, 4), strides=(2, 2)))
+    model.add(Dropout(0.2))
 
     # Classification block
     model.add(Flatten())
@@ -169,6 +170,8 @@ def train_model(model, train_generator, test_generator):
         validation_data=test_generator,
         validation_steps=config.TEST_EXAMPLES // config.BATCH_SIZE,
         verbose=2)
+
+    model.save(config.HIDE)
 
     print('acc: ', history.history['acc'])
     print('loss: ', history.history['loss'])
