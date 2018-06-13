@@ -61,3 +61,18 @@ VGG_EPOCHS = 5
 TOP_MODEL_MAX_EPOCHS = 300
 HIDE = os.path.join(RESOURCES_PATH, 'hide')
 
+BEST_MODEL_PATH = os.path.join(RESOURCES_PATH, 'dropout')
+
+# SVM
+SVM_BOTTLENECK_TRAIN_FEATURES_PATH = os.path.join(RESOURCES_PATH, 'svm_bottleneck_train.npy')
+SVM_BOTTLENECK_TEST_FEATURES_PATH = os.path.join(RESOURCES_PATH, 'svm_bottleneck_test.npy')
+
+SVM_SETTING = [
+    ('linear', dict(kernel='linear')),
+    ('poly2', dict(kernel='poly', degree=2)),
+    ('poly3', dict(kernel='poly', degree=3)),
+    ('poly4', dict(kernel='poly', degree=4)),
+    ('rbf', dict(kernel='rbf')),
+]
+SVM_TRAIN_SAMPLES = 10000
+
