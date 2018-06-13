@@ -3,7 +3,7 @@ from datetime import datetime
 import keras
 import numpy as np
 from keras import Sequential
-from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
+from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn import svm
 
@@ -53,7 +53,8 @@ def create_model(weights_path=None, layers_removed=3):
     model.add(Conv2D(128, (3, 3), activation='relu'))
     model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
     model.add(Conv2D(128, (3, 3), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
+    model.add(MaxPooling2D(pool_size=(4, 4), strides=(2, 2)))
+    model.add(Dropout(0.2))
 
     # Classification block
     model.add(Flatten())
@@ -131,4 +132,4 @@ def create_data_generators(X_train, X_test, y_train, y_test):
 
 
 if __name__ == "__main__":
-    main(bottleneck_ready=True, layers_removed=3)
+    main(bottleneck_ready=False, layers_removed=3)
