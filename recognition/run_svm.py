@@ -17,12 +17,12 @@ def main(bottleneck_ready=False, layers_removed=3):
 
     X_test, X_train = load_bottleneck_features(bottleneck_ready, train_generator, test_generator, layers_removed)
 
-    while len(y_train) < len(X_train):
-        y_train += y_train
+    # while len(y_train) < len(X_train):
+    #     y_train += y_train
+    #
+    # y_train = y_train[:len(X_train)]
 
-    y_train = y_train[:len(X_train)]
-
-    print(f"Train: {len(X_train)}, {len(y_train)}, test: {len(X_test)}")
+    print(f"Train: {len(X_train)}, test: {len(X_test)}")
 
     for setting in config.SVM_SETTING:
         start = datetime.now()
@@ -88,10 +88,9 @@ def load_bottleneck_features(bottleneck_ready, train_generator, test_generator, 
 
 
 def predict_bottleneck_features(train_generator, test_generator, layers_removed):
-    model = create_model(weights_path=config.BEST_MODEL_PATH)
+    model = create_model(weights_path=config.BEST_MODEL_PATH, layers_removed=layers_removed)
 
     bottleneck_features_train = model.predict_generator(generator=train_generator,
-                                                        steps=config.SVM_TRAIN_SAMPLES // config.BATCH_SIZE,
                                                         max_queue_size=config.TRAIN_EXAMPLES // config.BATCH_SIZE,
                                                         verbose=1)
     np.save(file=config.SVM_BOTTLENECK_TRAIN_FEATURES_PATH + str(layers_removed), arr=bottleneck_features_train)
@@ -130,7 +129,7 @@ def create_data_generators(X_train, X_test, y_train, y_test):
     y_train = keras.utils.to_categorical(np.array(y_train), num_classes=config.CLASSES)
     y_test = keras.utils.to_categorical(np.array(y_test), num_classes=config.CLASSES)
 
-    train_generator = dategen_train.flow(X_train, y_train, batch_size=config.BATCH_SIZE, shuffle=False)
+    train_generator = datagen_test.flow(X_train, y_train, batch_size=config.BATCH_SIZE, shuffle=False)
     test_generator = datagen_test.flow(X_test, y_test, batch_size=config.BATCH_SIZE, shuffle=False)
 
     return test_generator, train_generator
