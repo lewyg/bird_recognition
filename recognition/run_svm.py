@@ -17,7 +17,12 @@ def main(bottleneck_ready=False, layers_removed=3):
 
     X_test, X_train = load_bottleneck_features(bottleneck_ready, train_generator, test_generator, layers_removed)
 
-    print(f"Train: {len(X_train)}, test: {len(X_test)}")
+    while len(y_train) < len(X_train):
+        y_train += y_train
+
+    y_train = y_train[:len(X_train)]
+
+    print(f"Train: {len(X_train)}, {len(y_train)}, test: {len(X_test)}")
 
     for setting in config.SVM_SETTING:
         start = datetime.now()
@@ -76,8 +81,8 @@ def load_bottleneck_features(bottleneck_ready, train_generator, test_generator, 
         bottleneck_train, bottleneck_test = predict_bottleneck_features(train_generator, test_generator, layers_removed)
 
     else:
-        bottleneck_train = np.load(config.SVM_BOTTLENECK_TRAIN_FEATURES_PATH)
-        bottleneck_test = np.load(config.SVM_BOTTLENECK_TEST_FEATURES_PATH)
+        bottleneck_train = np.load(config.SVM_BOTTLENECK_TRAIN_FEATURES_PATH + str(layers_removed))
+        bottleneck_test = np.load(config.SVM_BOTTLENECK_TEST_FEATURES_PATH + str(layers_removed))
 
     return bottleneck_test, bottleneck_train
 
@@ -132,4 +137,4 @@ def create_data_generators(X_train, X_test, y_train, y_test):
 
 
 if __name__ == "__main__":
-    main(bottleneck_ready=False, layers_removed=3)
+    main(bottleneck_ready=True, layers_removed=3)
