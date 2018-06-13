@@ -72,6 +72,7 @@ SVM_SETTING = [
     ('poly2', dict(kernel='poly', degree=2)),
     ('poly3', dict(kernel='poly', degree=3)),
     ('poly4', dict(kernel='poly', degree=4)),
+    ('poly5', dict(kernel='poly', degree=5)),
     ('rbf', dict(kernel='rbf')),
 ]
 SVM_TRAIN_SAMPLES = 10000
