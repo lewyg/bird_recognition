@@ -96,21 +96,25 @@ def hide_generator():
         return img
 
     return ImageDataGenerator(rescale=1. / 255,
-                              # rotacja+translacja?
+                              rotation_range=8,
+                              width_shift_range=0.2,
+                              height_shift_range=0.2,
                               fill_mode="reflect",
                               preprocessing_function=hide_part)
 
 
 def noise_generator():
-    # todo albo lepiej uzyc warstwy keras.layers.GaussianNoise
     def noise(img):
-        noise_shape = img.shape
-        noise = 10 * np.random.randn(*noise_shape)
-        img = img + noise
+        if random() > 0.3:
+            noise_shape = img.shape
+            noise = 10 * np.random.randn(*noise_shape)
+            img = img + noise
         return img
 
     return ImageDataGenerator(rescale=1. / 255,
-                              # rotacja+translacja?
+                              rotation_range=8,
+                              width_shift_range=0.2,
+                              height_shift_range=0.2,
                               fill_mode="reflect",
                               preprocessing_function=noise)
 
