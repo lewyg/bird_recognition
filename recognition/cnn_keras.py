@@ -169,7 +169,8 @@ def train_model(model, train_generator, test_generator):
         epochs=epochs,
         validation_data=test_generator,
         validation_steps=config.TEST_EXAMPLES // config.BATCH_SIZE,
-        verbose=2)
+        verbose=2,
+        callbacks=[keras.callbacks.EarlyStopping(monitor='val_acc', min_delta=0.01, patience=4, verbose=0, mode='auto')])
 
     model.save(config.HIDE)
 
